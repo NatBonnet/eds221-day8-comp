@@ -10,6 +10,8 @@ editor: visual
 library(tidyverse)
 library(here)
 library(janitor)
+library(paletteer)
+library(patchwork)
 ```
 
 # Read in lizard data
@@ -54,14 +56,14 @@ don't need to use `aes`
 ```{r}
 ggplot(lizards, aes(x = weight))+
   geom_histogram(color = "pink", fill = "purple4", alpha = 0.6, linetype = "dashed")
-
-
 ```
 
 ```{r}
 ggplot(lizards, aes(x= total_length, y = weight))+
   geom_point(aes(color = common_name), alpha = 0.4)
 ```
+
+
 ```{r}
 ggplot(lizards, aes(x = weight, y= site))+
   geom_jitter(aes(color = common_name))+
@@ -84,4 +86,81 @@ lizard_counts <- lizards |>
 ggplot(lizard_counts, aes(x = n, y = fct_reorder(common_name, n)))+
   geom_col()
 ```
+
+# advanced ggplot customization
+
+```{r}
+ggplot(lizards, 
+       aes(x = total_length, y= weight))+
+  geom_point()+
+  scale_x_continuous(breaks = c(0, 100, 200, 300, 400, 500), limits = c(0, 500))+ #editing the x axis
+  scale_y_continuous(breaks = seq(from = 0, to = 70, by = 10), limits = c(0, 70))+
+  labs(x= "Total length (mm)", y = "Weigth (g)", title = "Weight by Lizard Length")+
+  theme_minimal()
+
+```
+```{r}
+#lubridate makes it easier to plot date info
+#counting lizard observations per day, plotting lizards per day
+lizard_counts <- lizards |>
+  mutate(date = lubridate::mdy(date)) |>
+  count(date)
+
+ggplot(lizard_counts, aes(x = date, y = n))+
+  geom_line()+
+  scale_x_date(breaks = scales::breaks_width("2 years"), labels = scales::label_date("%Y")) +
+  theme_minimal()
+
+```
+
+#customization of aesthetics with `scale_`
+```{r}
+#gradient with just two colors
+ggplot(lizards, aes(x = total_length, y = weight))+
+  geom_point(aes(color= weight))+
+  scale_color_gradient(low = "orange", high = "navy") #creating a new color gradient
+  
+ggplot(lizards, aes(x = total_length, y = weight))+
+  geom_point(aes(color= weight))+
+  scale_color_gradientn(colors = c("orange", "purple", "navy", "black")) \
+
+ggplot(lizards, aes(x = total_length, y = weight))+
+  geom_point(aes(color= weight))+
+  scale_color_steps(low = "orange", high = "navy", breaks = seq(0,80, by= 1))
+
+```
+
+```{r}
+p2 <- ggplot(lizards, 
+       aes(x = common_name, y= total_length))+
+  geom_boxplot(aes(fill = common_name), 
+               show.legend = FALSE)+
+  coord_flip()
+```
+
+```{r}
+lizards_mean <- lizards |> mutate(common_name = fct_reorder(common_name, total_length, .fun = median))
+
+p1 <- ggplot(lizards_mean, aes(x = total_length, common_name))+
+  geom_boxplot(aes(fill = common_name), 
+               show.legend = FALSE)+
+  scale_fill_paletteer_d(palette = "rcartocolor::Antique")+
+  labs(title = "Lizard Length by Species", x = "Total length (mm)", y = "Species")+
+  theme_minimal()+
+  theme(panel.grid.minor = element_blank())
+```
+
+
+```{r}
+# "|" puts plots next to each other
+# / puts plots on top of each other
+(p1 / p2) & theme_minimal()
+
+# combinations od next to and on top of each other
+p3<- (p1 | p2) / p2
+
+ggsave("test.png", p3)
+```
+
+
 
