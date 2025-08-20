@@ -1,0 +1,87 @@
+---
+title: "ggplot practice"
+format: html
+editor: visual
+---
+
+# attaching packages
+
+```{r}
+library(tidyverse)
+library(here)
+library(janitor)
+```
+
+# Read in lizard data
+
+```{r}
+lizards <- read_csv(here::here("data_tidy", "lizards.csv"))
+```
+
+# the essentials
+
+-   data
+-   aes
+-   geometry
+
+```{r}
+#data and aesthetics stay the same
+ggplot(data = lizards, aes(x= total_length, y= weight)) + # 1 and 2
+  geom_point() #3
+
+ggplot(data = lizards)+ #the data stays consistent but this way you have more flexibility to change axes 
+  geom_point(aes(x = total_length, y = weight)) #the exact same plot
+
+#most flexible way to do it- can change anything
+ggplot()+
+  geom_point(data = lizards, aes(x= total_length, y= weight))
+```
+Some geom types only need one axis: histogram
+```{r}
+ggplot(data = lizards, aes(x = total_length)) +
+  geom_histogram()
+```
+
+ # Jitterplots work best with one categorical and one continuous variable
+```{r}
+ggplot(lizards, aes(x= weight, y= common_name))+
+  geom_jitter()
+```
+
+Aesthetic mapping 
+# updating based on a constant value
+don't need to use `aes`
+```{r}
+ggplot(lizards, aes(x = weight))+
+  geom_histogram(color = "pink", fill = "purple4", alpha = 0.6, linetype = "dashed")
+
+
+```
+
+```{r}
+ggplot(lizards, aes(x= total_length, y = weight))+
+  geom_point(aes(color = common_name), alpha = 0.4)
+```
+```{r}
+ggplot(lizards, aes(x = weight, y= site))+
+  geom_jitter(aes(color = common_name))+
+  theme_minimal()
+```
+
+```{r}
+ggplot(lizards, aes(x = weight, y= site))+
+  geom_jitter(aes(color =  common_name)) +
+  theme_minimal()+
+  labs(title = "Lizard Weights Across Sites at Jornada", x = "Weight (g)", y = "Study Site", color = "Species")
+```
+# reorder data based on a variable
+
+```{r}
+#creating new df
+lizard_counts <- lizards |>
+  count(common_name)
+
+ggplot(lizard_counts, aes(x = n, y = fct_reorder(common_name, n)))+
+  geom_col()
+```
+
